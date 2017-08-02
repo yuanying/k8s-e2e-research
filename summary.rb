@@ -20,5 +20,5 @@ else
 end
 
 results.each do |line|
-  puts "-   #{line[1]} (#{line[0]}s)"
+  puts "#{line[1]} (#{line[0]}s)"
 end
