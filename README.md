@@ -1,5 +1,44 @@
 # k8s-e2e-research
 
+## Install Go 1.8.3
+
+```bash
+export GOPATH=~/go
+echo "export GOPATH=~/go" >> ~/.bashrc
+export PATH=$PATH:/usr/local/go/bin
+echo "export PATH=$PATH:/usr/local/go/bin"  >> ~/.bashrc
+export KUBECTL_PATH=/usr/local/bin/kubectl
+echo "export KUBECTL_PATH=/usr/local/bin/kubectl"  >> ~/.bashrc
+curl -O https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.8.3.linux-amd64.tar.gz
+```
+
+## Install Kubernetes
+
+```bash
+$ go get k8s.io/kubernetes
+```
+
+## Install kubectl
+
+```bash
+$ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+$ chmod +x kubectl
+$ sudo mv kubectl /usr/local/bin/
+```
+
+## Compile required binaries
+
+See: https://github.com/kubernetes/kubernetes/blob/release-1.7/build/root/Makefile#L197
+
+```bash
+$ sudo usermod -a -G docker ${USER} # Need re-login
+$ cd $GOPATH/src/k8s.io/kubernetes
+$ make quick-release
+$ make ginkgo
+$ make generated_files
+```
+
 ## Conformance Test
 
 > [Conformance] tests represent a subset of the e2e-tests
