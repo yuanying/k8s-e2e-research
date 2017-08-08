@@ -1,0 +1,61 @@
+# How to execute `extra e2e test`
+
+## Requirement
+
+-   python3
+-   pip
+
+## Install
+
+```bash
+$ pip install -r requirements.txt
+```
+
+## Run test
+
+```bash
+$ export EE2E_TEST_CONFIG=${PATH_TO_CONFIG_FILE}
+$ python -m unittest -v
+```
+
+### test config
+
+Following yaml file is example of test config file.
+Please change this to your own config.
+
+```yaml
+---
+# Default username of virsh hosts
+user: yuanying
+# Default private key to ssh virsh hosts
+private_key: ~/.ssh/id_rsa
+
+kubernetes:
+  kubectl_path: /usr/local/bin/kubectl
+  context: test
+
+targets:
+  '192.168.1.111':
+    guestname: coreos-master01
+    host: 192.168.200.4
+  '192.168.1.112':
+    guestname: coreos-master02
+    host: 192.168.200.4
+  '192.168.1.113':
+    guestname: coreos-master03
+    host: 192.168.200.5
+  '192.168.1.121':
+    guestname: coreos-worker01
+    host: 192.168.200.4
+  '192.168.1.122':
+    guestname: coreos-worker02
+    host: 192.168.200.5
+  '192.168.1.123':
+    guestname: coreos-worker03
+    host: 192.168.200.4
+
+virsh_hosts:
+  '192.168.200.4': {}
+  '192.168.200.5': {}
+
+```
