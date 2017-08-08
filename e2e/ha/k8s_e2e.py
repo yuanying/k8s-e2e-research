@@ -46,11 +46,29 @@ class HATestBase(base.TestCase):
 
     @classmethod
     def kubectl_path(cls):
-        return cls.env['kubernetes']['kubectl_path']
+        return cls.kube_param('kubectl_path')
 
     @classmethod
     def kubectl_context(cls):
-        return cls.env['kubernetes']['context']
+        return cls.kube_param('context')
+
+    @classmethod
+    def k8s_path(cls):
+        return os.path.expanduser(
+            cls.kube_param('path')
+        )
+
+    @classmethod
+    def kube_param(cls, key):
+        return cls.env['kubernetes'].get(key, None)
+
+    @classmethod
+    def ginkgo_param(cls, key):
+        return cls.env['ginkgo'].get(key, None)
+
+    @classmethod
+    def ginkgo_focus(cls):
+        return cls.ginkgo_param('focus')
 
     @classmethod
     def get_private_key_path(cls, target):
@@ -73,16 +91,21 @@ class HATestBase(base.TestCase):
             c.close()
 
     def setUp(self):
+        return
         client = self.ssh_host_conn()
         command = 'sudo virsh destroy {}'.format(self.guestname())
         client.exec_command(command)
 
         self.check_subprocess_output(
-            "kubectl get nodes {}".format(self.target),
+            "{} get nodes {}".format(
+                self.kubectl_path(),
+                self.target,
+            ),
             'NotReady'
         )
 
     def tearDown(self):
+        return
         client = self.ssh_host_conn()
         command = 'sudo virsh start {}'.format(self.guestname())
         client.exec_command(command)
@@ -99,17 +122,39 @@ class HATestBase(base.TestCase):
             time.sleep(3)
 
         self.check_subprocess_output(
-            "kubectl get nodes {}".format(self.target),
-            'Ready'
+            "{} get nodes {}".format(
+                self.kubectl_path(),
+                self.target,
+            ),
+            ' Ready'
         )
 
     def test_health(self):
         self.assertEqual(True, True)
         output = subprocess.check_output(
-            "kubectl get nodes {}".format(self.target),
+            "{} get nodes {}".format(self.kubectl_path(), self.target),
             shell=True
         ).decode("utf-8")
-        self.assertRegex(output, 'Ready')
+        self.assertRegex(output, 'NotReady')
+
+    def test_e2e(self):
+        myenv = os.environ.copy()
+        myenv['KUBERNETES_CONFORMANCE_TEST'] = 'true'
+        myenv['KUBERNETES_PROVIDER'] = 'skelton'
+        cmd = (
+            'go run hack/e2e.go '
+            '-- -v --test '
+            '--test_args="--ginkgo.dryRun={dryRun} --ginkgo.focus={focus}"'
+        ).format(
+            dryRun=self.ginkgo_param('dryRun'),
+            focus=self.ginkgo_focus(),
+        )
+        cwd = self.k8s_path()
+
+        output = subprocess.check_output(
+            cmd, shell=True, cwd=cwd, env=myenv
+        ).decode('utf-8')
+        print(output)
 
     def guestname(self):
         return self.target_info()['guestname']
@@ -123,7 +168,7 @@ class HATestBase(base.TestCase):
     def ssh_host_conn(self):
         return self.connections[self.host()]
 
-    def check_subprocess_output(cmd, pass_string, attempts=3):
+    def check_subprocess_output(self, cmd, pass_string, attempts=3):
         while True:
             try:
                 output = subprocess.check_output(
@@ -131,6 +176,7 @@ class HATestBase(base.TestCase):
                     shell=True
                 ).decode('utf-8')
                 print(output)
+                time.sleep(3)
                 if re.search(pass_string, output):
                     break
             except Exception as e:
