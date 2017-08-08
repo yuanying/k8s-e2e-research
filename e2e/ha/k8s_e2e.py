@@ -44,6 +44,14 @@ class HATestBase(base.TestCase):
 
             cls.connections[virsh_host] = c
 
+        cls.shutdown_node()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.start_node()
+        for c in cls.connections.values():
+            c.close()
+
     @classmethod
     def kubectl_path(cls):
         return cls.kube_param('kubectl_path')
@@ -86,31 +94,28 @@ class HATestBase(base.TestCase):
         return v
 
     @classmethod
-    def tearDownClass(cls):
-        for c in cls.connections.values():
-            c.close()
-
-    def setUp(self):
-        client = self.ssh_host_conn()
-        command = 'sudo virsh destroy {}'.format(self.guestname())
+    def shutdown_node(cls):
+        client = cls.ssh_host_conn()
+        command = 'sudo virsh destroy {}'.format(cls.guestname())
         client.exec_command(command)
 
-        self.check_subprocess_output(
+        cls.check_subprocess_output(
             "{} get nodes {}".format(
-                self.kubectl_path(),
-                self.target,
+                cls.kubectl_path(),
+                cls.target,
             ),
             'NotReady'
         )
 
-    def tearDown(self):
-        client = self.ssh_host_conn()
-        command = 'sudo virsh start {}'.format(self.guestname())
+    @classmethod
+    def start_node(cls):
+        client = cls.ssh_host_conn()
+        command = 'sudo virsh start {}'.format(cls.guestname())
         client.exec_command(command)
 
         while True:
             _, stdout, _ = client.exec_command(
-                'sudo virsh domstate {}'.format(self.guestname())
+                'sudo virsh domstate {}'.format(cls.guestname())
             )
             domstate = stdout.read().strip()
             print(domstate)
@@ -119,13 +124,46 @@ class HATestBase(base.TestCase):
 
             time.sleep(3)
 
-        self.check_subprocess_output(
+        cls.check_subprocess_output(
             "{} get nodes {}".format(
-                self.kubectl_path(),
-                self.target,
+                cls.kubectl_path(),
+                cls.target,
             ),
             ' Ready'
         )
+
+    @classmethod
+    def guestname(self):
+        return self.target_info()['guestname']
+
+    @classmethod
+    def host(self):
+        return self.target_info()['host']
+
+    @classmethod
+    def target_info(self):
+        return self.env['targets'][self.target]
+
+    @classmethod
+    def ssh_host_conn(self):
+        return self.connections[self.host()]
+
+    @classmethod
+    def check_subprocess_output(self, cmd, pass_string, attempts=3):
+        while True:
+            try:
+                output = subprocess.check_output(
+                    cmd,
+                    shell=True
+                ).decode('utf-8')
+                print(output)
+                time.sleep(3)
+                if re.search(pass_string, output):
+                    break
+            except Exception as e:
+                attempts = attempts - 1
+                if attempts < 0:
+                    raise
 
     def test_health(self):
         self.assertEqual(True, True)
@@ -153,31 +191,3 @@ class HATestBase(base.TestCase):
             cmd, shell=True, cwd=cwd, env=myenv
         ).decode('utf-8')
         print(output)
-
-    def guestname(self):
-        return self.target_info()['guestname']
-
-    def host(self):
-        return self.target_info()['host']
-
-    def target_info(self):
-        return self.env['targets'][self.target]
-
-    def ssh_host_conn(self):
-        return self.connections[self.host()]
-
-    def check_subprocess_output(self, cmd, pass_string, attempts=3):
-        while True:
-            try:
-                output = subprocess.check_output(
-                    cmd,
-                    shell=True
-                ).decode('utf-8')
-                print(output)
-                time.sleep(3)
-                if re.search(pass_string, output):
-                    break
-            except Exception as e:
-                attempts = attempts - 1
-                if attempts < 0:
-                    raise
