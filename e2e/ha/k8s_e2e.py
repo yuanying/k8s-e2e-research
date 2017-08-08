@@ -91,7 +91,6 @@ class HATestBase(base.TestCase):
             c.close()
 
     def setUp(self):
-        return
         client = self.ssh_host_conn()
         command = 'sudo virsh destroy {}'.format(self.guestname())
         client.exec_command(command)
@@ -105,7 +104,6 @@ class HATestBase(base.TestCase):
         )
 
     def tearDown(self):
-        return
         client = self.ssh_host_conn()
         command = 'sudo virsh start {}'.format(self.guestname())
         client.exec_command(command)
