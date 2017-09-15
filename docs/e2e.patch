@@ -1,0 +1,58 @@
+diff --git a/test/e2e/framework/util.go b/test/e2e/framework/util.go
+index 5d4e9c2..b1a1d2d 100644
+--- a/test/e2e/framework/util.go
++++ b/test/e2e/framework/util.go
+@@ -75,7 +75,7 @@ import (
+ 	clientset "k8s.io/client-go/kubernetes"
+ 	"k8s.io/kubernetes/pkg/api"
+ 	"k8s.io/kubernetes/pkg/api/testapi"
+-	nodeutil "k8s.io/kubernetes/pkg/api/v1/node"
++	//nodeutil "k8s.io/kubernetes/pkg/api/v1/node"
+ 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
+ 	batchinternal "k8s.io/kubernetes/pkg/apis/batch"
+ 	extensionsinternal "k8s.io/kubernetes/pkg/apis/extensions"
+@@ -648,15 +648,15 @@ func WaitForPodsRunningReady(c clientset.Interface, ns string, minPods, allowedN
+ 				badPods = append(badPods, pod)
+ 				// it doesn't make sense to wait for this pod
+ 				return false, errors.New("unexpected Succeeded pod state")
+-			case pod.Status.Phase != v1.PodFailed:
+-				Logf("The status of Pod %s is %s (Ready = false), waiting for it to be either Running (with Ready = true) or Failed", pod.ObjectMeta.Name, pod.Status.Phase)
+-				notReady++
+-				badPods = append(badPods, pod)
++			//case pod.Status.Phase != v1.PodFailed:
++			//	Logf("The status of Pod %s is %s (Ready = false), waiting for it to be either Running (with Ready = true) or Failed", pod.ObjectMeta.Name, pod.Status.Phase)
++			//	notReady++
++			//	badPods = append(badPods, pod)
+ 			default:
+-				if metav1.GetControllerOf(&pod) == nil {
+-					Logf("Pod %s is Failed, but it's not controlled by a controller", pod.ObjectMeta.Name)
+-					badPods = append(badPods, pod)
+-				}
++				//if metav1.GetControllerOf(&pod) == nil {
++				//	Logf("Pod %s is Failed, but it's not controlled by a controller", pod.ObjectMeta.Name)
++				//	badPods = append(badPods, pod)
++				//}
+ 				//ignore failed pods that are controlled by some controller
+ 			}
+ 		}
+@@ -3586,13 +3586,13 @@ func WaitForNodeToBe(c clientset.Interface, name string, conditionType v1.NodeCo
+ // - not present CNI plugins on node
+ // TODO: we should extend it for other reasons.
+ func allowedNotReadyReasons(nodes []*v1.Node) bool {
+-	for _, node := range nodes {
+-		index, condition := nodeutil.GetNodeCondition(&node.Status, v1.NodeReady)
+-		if index == -1 ||
+-			!strings.Contains(condition.Message, "could not locate kubenet required CNI plugins") {
+-			return false
+-		}
+-	}
++//	for _, node := range nodes {
++//		index, condition := nodeutil.GetNodeCondition(&node.Status, v1.NodeReady)
++//		if index == -1 ||
++//			!strings.Contains(condition.Message, "could not locate kubenet required CNI plugins") {
++//			return false
++//		}
++//	}
+ 	return true
+ }
+ 
