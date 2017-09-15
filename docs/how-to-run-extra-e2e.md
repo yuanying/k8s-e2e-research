@@ -11,6 +11,20 @@
 $ pip install -r requirements.txt
 ```
 
+### Apply patch
+
+This extra e2e test run e2e test when one node in cluster is down.
+But e2e test require all node is ready status.
+You need patch to e2e code with below commands.
+
+```bash
+cd $GOPATH/src/k8s.io/kubernetes
+patch --verbose -u -p1 --dry-run < e2e.patch # check for success
+patch --verbose -u -p1 < e2e.patch
+```
+
+and compile e2e, see [Here](../README.md)
+
 ## Run test
 
 ```bash
